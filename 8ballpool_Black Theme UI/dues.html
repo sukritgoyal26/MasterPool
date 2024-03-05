@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Fetch Dues Data</title>
+    <style>
+      body {
+        font-family: "Arial", sans-serif;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        background-color: #222;
+      }
+      .tableContainer {
+        width: 80%;
+        padding: 50px;
+        background-color: #333;
+        border-radius: 20px;
+      }
+      #duesTable {
+        border: none;
+        width: 100%;
+        margin: 20px auto;
+        border-collapse: collapse;
+        background-color: #333;
+        color: #e0e0e0;
+      }
+
+      #duesTable th,
+      #duesTable td {
+        border: none;
+        border-bottom: 1px solid #ddd;
+        padding: 10px;
+        text-align: left;
+      }
+
+      #duesTable th {
+        background-color: #4caf50;
+        color: #fff;
+      }
+
+      .popup {
+        position: fixed;
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        padding: 20px;
+        background: #fff;
+        border: 2px solid #333;
+        z-index: 999;
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+      }
+      .popupPay {
+        width: 300px;
+        position: fixed;
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        padding: 20px;
+        background: #fff;
+        border: 2px solid #333;
+        z-index: 999;
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+      }
+      .popupPay h1 {
+        color: #222;
+      }
+
+      .hide {
+        display: none;
+      }
+
+      #popupTable {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      #popupTable th,
+      #popupTable td {
+        border: 1px solid #ddd;
+        padding: 10px;
+        text-align: left;
+      }
+
+      #popupTable th {
+        background-color: #333;
+        color: #fff;
+      }
+
+      #popupTable tbody tr:nth-child(even) {
+        background-color: #f9f9f9;
+      }
+
+      #popupTable tbody tr:hover {
+        background-color: #e0e0e0;
+      }
+
+      button {
+        cursor: pointer;
+        padding: 10px;
+        background-color: #444;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+      }
+
+      button:hover {
+        background-color: #333;
+      }
+
+      #popupTable tbody tr.repayment {
+        background-color: #8fec8f; /* Light green color, you can change this */
+      }
+      h1 {
+        color: #fff;
+        text-align: center;
+      }
+      nav {
+        width: 100%;
+        position: relative;
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        height: 100px;
+      }
+      #searchBox {
+        position: absolute;
+        outline: none;
+        right: 50px;
+        border: none;
+        padding: 5px;
+        border-radius: 20px;
+        width: 150px;
+        font-weight: bold;
+      }
+      .popup h1 {
+        color: #222;
+      }
+      .payDets {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .payDets input,
+      select {
+        font-size: 18px;
+      }
+    </style>
+  </head>
+  <body>
+    <nav>
+      <h1>Dues Table</h1>
+      <input
+        type="search"
+        name="searchBox"
+        id="searchBox"
+        placeholder="search..."
+        onkeydown="searchFunc()"
+      />
+    </nav>
+    <div class="tableContainer">
+      <table id="duesTable" border="1">
+        <thead>
+          <tr>
+            <th>Customer Name</th>
+            <th>Customer Number</th>
+            <th>Status</th>
+            <th>Amount</th>
+            <th>Action</th>
+            <th>Pay</th>
+          </tr>
+        </thead>
+        <tbody id="duesTableBody"></tbody>
+      </table>
+    </div>
+
+    <div class="popup hide" id="popup">
+      <table id="popupTable">
+        <tbody id="popupTableBody"></tbody>
+      </table>
+      <button onclick="closePopup()">Close</button>
+    </div>
+
+    <div class="popupPay hide" id="popupPay">
+      <div id="popupPayContent"></div>
+      <button onclick="closePopupPay()">Close</button>
+    </div>
+
+    <script>
+      function checkUser() {
+        const userId = localStorage.getItem("userData")
+          ? JSON.parse(localStorage.getItem("userData"))
+          : null;
+
+        if (userId === null) {
+          window.location.href = "login/login.html";
+        }
+        fetchDuesData();
+      }
+      checkUser();
+      addEventListener("click", checkUser);
+      fetchDuesData();
+      function fetchDuesData() {
+        fetch(`http://localhost:8080/user/getTodaysDues`)
+          .then((response) => response.json())
+          .then((data) => {
+            document.getElementById("duesTableBody").innerHTML = "";
+            data.forEach((due) => {
+              var row = document.createElement("tr");
+              row.id = due.customerName;
+              row.innerHTML = `<td>${due.customerName}</td>
+                                        <td>${due.customerNumber}</td>
+                                        <td>${due.status}</td>
+                                        <td>${due.amount}</td>
+                                        <td><button onclick="showDetails('${due.customerNumber}')">Details</button></td>
+                                        <td><button class="payButton" onclick="showPopupWithCustomerDetails('${due.customerName}','${due.customerNumber}', '${due.amount}')">Pay</button></td>`;
+              document.getElementById("duesTableBody").appendChild(row);
+            });
+          })
+          .catch((error) => {
+            console.error("Error fetching data:", error);
+            alert("Error fetching data. Please try again.");
+          });
+      }
+
+      function showDetails(customerNumber) {
+        fetch(
+          `http://localhost:8080/user/getTodaysCustomerDuesDetails?customerNumber=${customerNumber}`
+        )
+          .then((response) => response.json())
+          .then((customerDuesList) => {
+            document.getElementById("popupTableBody").innerHTML = "";
+
+            // Add table headings
+            var headerRow = document.createElement("tr");
+            headerRow.innerHTML = `
+                        <th>Description</th>
+                        <th>Customer Number</th>
+                        <th>Date</th>
+                        <th>Amount</th>`;
+            document.getElementById("popupTableBody").appendChild(headerRow);
+
+            // Create a single row for each due in the pop-up table
+            customerDuesList.forEach((due) => {
+              var row = document.createElement("tr");
+
+              // Check if the description is "Repayment" and add a class for styling
+              if (due.description === "Repayment") {
+                row.classList.add("repayment");
+              }
+
+              // Parse and format the date
+              var date = new Date(due.date);
+              var formattedDate = `${date
+                .getDate()
+                .toString()
+                .padStart(2, "0")}/${(date.getMonth() + 1)
+                .toString()
+                .padStart(2, "0")}/${date.getFullYear()}`;
+
+              row.innerHTML += `
+                            <td>${due.description}</td>
+                            <td>${due.customerNumber}</td>
+                            <td>${formattedDate}</td>
+                            <td>${
+                              due.amount < 0 ? due.amount * -1 : due.amount
+                            }</td>`;
+              document.getElementById("popupTableBody").appendChild(row);
+            });
+
+            document.getElementById("popup").style.display = "block";
+          })
+          .catch((error) => {
+            console.error("Error fetching details:", error);
+            alert("Error fetching details. Please try again.");
+          });
+      }
+
+      function showPopupWithCustomerDetails(
+        customerName,
+        customerNumber,
+        totalAmount
+      ) {
+        const popup = document.getElementById("popupPay");
+        const popupContent = document.getElementById("popupPayContent");
+
+        const popupHTML = `
+                <h1>Pay Dues</h1>
+                <label>Customer Name: <b>${customerName}</b></label>
+                <label>Customer Number: <b>${customerNumber}</b></label>
+                <label>Total Dues:  <b>${totalAmount} Rs</b></label>
+                <input type="number" id="paymentAmount" placeholder="Enter amount" />
+                <select id="paymentMode">
+                    <option value="select">Select Payment Method</option>
+                    <option value="paytm">Paytm</option>
+                    <option value="cash">Cash</option>
+                </select>
+                <button onclick="sendPaymentData('${customerName}', '${customerNumber}', '${totalAmount}' )">Pay Now</button>
+
+
+            `;
+
+        popupContent.classList.add("payDets");
+        popupContent.innerHTML = popupHTML;
+        popup.style.display = "flex";
+      }
+
+      function sendPaymentData(customerName, customerNumber, totalAmount) {
+        const paymentAmount = document.getElementById("paymentAmount").value;
+        const paymentMode = document.getElementById("paymentMode").value;
+        console.log(typeof paymentAmount);
+        console.log(typeof totalAmount);
+        if (paymentMode == "select") {
+          alert("select Payment Method");
+        } else {
+          if (parseInt(paymentAmount) > parseInt(totalAmount)) {
+            alert("Amount can't be greater than the Dues");
+          } else {
+            const userId = localStorage.getItem("userData")
+              ? JSON.parse(localStorage.getItem("userData")).userId
+              : null;
+
+            fetch("http://localhost:8080/user/payDues", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+              },
+              body: new URLSearchParams({
+                customerNumber: customerNumber,
+                userId: userId,
+                amount: paymentAmount,
+                paymentMode: paymentMode,
+              }),
+            })
+              .then((response) => response.text())
+              .then((data) => {
+                alert(data);
+                location.reload();
+
+                closePopup();
+              })
+              .catch((error) => {
+                console.error("Error:", error);
+              });
+          }
+        }
+      }
+
+      function closePopupPay() {
+        document.getElementById("popupPay").style.display = "none";
+      }
+
+      function closePopup() {
+        document.getElementById("popup").style.display = "none";
+      }
+
+      document
+        .getElementById("searchBox")
+        .addEventListener("input", function () {
+          searchFunc();
+        });
+
+      function searchFunc() {
+        // Get the input value from the search box
+        const searchQuery = document
+          .getElementById("searchBox")
+          .value.toLowerCase();
+
+        // Get all rows in the table body
+        const rows = document
+          .getElementById("duesTableBody")
+          .getElementsByTagName("tr");
+
+        // Loop through each row and hide/show based on the search query
+        for (let i = 0; i < rows.length; i++) {
+          const customerName = rows[i]
+            .getElementsByTagName("td")[0]
+            .textContent.toLowerCase();
+
+          // Check if the customerName includes the search query
+          if (customerName.includes(searchQuery)) {
+            rows[i].style.display = "";
+          } else {
+            rows[i].style.display = "none";
+          }
+        }
+      }
+    </script>
+  </body>
+</html>

@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Report Page</title>
+    <style>
+      body {
+        color: #ebebeb;
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #222;
+      }
+
+      div {
+        margin: 20px;
+      }
+
+      form {
+        display: none;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      label {
+        margin-bottom: 10px;
+      }
+
+      input {
+        padding: 8px;
+        margin-bottom: 15px;
+        width: 200px;
+        outline: none;
+        border: none;
+        border-radius: 20px;
+        margin-left: 5px;
+      }
+
+      button {
+        padding: 10px;
+        background-color: #1e0ddc;
+        color: white;
+        border: none;
+        cursor: pointer;
+        border-radius: 20px;
+      }
+
+      button:hover {
+        background-color: #137eca;
+      }
+
+      #collection-container {
+        margin: 20px;
+        padding: 20px;
+        background-color: #333;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        overflow: auto; /* Added overflow to enable scrolling if needed */
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+      }
+
+      th,
+      td {
+        padding: 12px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+      }
+
+      th {
+        background-color: #4caf50;
+        color: white;
+      }
+
+      #billing-status {
+        margin-top: 20px;
+        font-weight: bold;
+      }
+
+      .opt {
+        display: flex;
+        gap: 50px;
+      }
+
+      .optRad {
+        width: 20px;
+      }
+
+      .collectionDetailsContainer {
+        margin-left: 80%;
+      }
+
+      .duesCollection {
+        margin-top: 20px;
+        color: white;
+      }
+
+      /* Added styles for due and repayment */
+      .duesCollection span {
+        display: inline-block;
+        min-width: 120px;
+      }
+
+      /* Adjusted the positioning of the details container */
+      .detailsContainer {
+        margin-top: 20px;
+      }
+
+      /* Added a background color for better visibility */
+      .detailsContainer p {
+        background-color: #444;
+        padding: 5px;
+        margin: 5px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="opt">
+      <label>
+        <input
+          type="radio"
+          class="optRad"
+          name="formSelector"
+          id="form1Radio"
+          checked
+        />
+        By Cashier ID
+      </label>
+
+      <label>
+        <input
+          type="radio"
+          class="optRad"
+          name="formSelector"
+          id="form2Radio"
+        />
+        By Cashier ID and Date
+      </label>
+
+      <label>
+        <input
+          type="radio"
+          class="optRad"
+          name="formSelector"
+          id="form3Radio"
+        />
+        By Custom Date
+      </label>
+
+      <label>
+        <input
+          type="radio"
+          class="optRad"
+          name="formSelector"
+          id="form4Radio"
+        />
+        Todays Collection
+        </label>
+
+
+    </div>
+
+    <div>
+      <form onsubmit="getTodayCollection(event)" id="form1">
+        <label for="cashierId">Enter Cashier ID:</label>
+        <input type="text" id="cashierId" required />
+        <button type="submit">Get Today's Collection</button>
+      </form>
+    </div>
+
+    <div>
+      <form onsubmit="getCollectionByUserWithDate(event)" id="form2">
+        <label for="cashierIdRange">Enter Cashier ID:</label>
+        <input type="text" id="cashierIdRange" required />
+
+        <label for="startDateRange">Start Date:</label>
+        <input type="date" id="startDateRange" required />
+
+        <label for="endDateRange">End Date:</label>
+        <input type="date" id="endDateRange" required />
+
+        <button type="submit">Get Collection by Date Range</button>
+      </form>
+    </div>
+
+    <div>
+      <form onsubmit="getCollectionByCustomDate(event)" id="form3">
+        <label for="startDate">Start Date:</label>
+        <input type="date" id="startDate" required />
+
+        <label for="endDate">End Date:</label>
+        <input type="date" id="endDate" required />
+
+        <button type="submit">Get Collection by Custom Date Range</button>
+      </form>
+    </div>
+
+
+
+<div>
+    <form onsubmit="getTodayCollectionReport(event)" id="form4">
+      <button type="submit">Get Today Collection</button>
+    </form>
+</div>
+
+
+
+
+
+
+
+
+    <div id="collection-container">
+      <h2>Today's Collection</h2>
+      <table id="billing-table">
+        <thead>
+          <tr>
+            <th>Bill No</th>
+            <th>Customer Name</th>
+            <th>Date</th>
+            <th>Total Time Played</th>
+            <th>Bill Amount</th>
+            <th>Billing By</th>
+            <th>Billing Mode</th>
+          </tr>
+        </thead>
+        <tbody id="billing-body"></tbody>
+      </table>
+      <p id="billing-status"></p>
+      <div class="collectionDetailsContainer">
+        <p>UPI Collection: <span id="upiCollection"></span></p>
+        <p>Cash Collection: <span id="cashCollection"></span></p>
+        <p>Total Collection: <span id="totalCollection"></span></p>
+      </div>
+    </div>
+
+
+    <div class="duesCollection">
+  
+      <p>  Dues <span id="todaysDue"></span></p>
+      <p>Repayment <span id="todaysRepayment"></span></p>
+    </div>
+  </div>
+
+
+
+    
+
+
+    <script>
+      document
+        .getElementById("form1Radio")
+        .addEventListener("change", toggleFormVisibility);
+      document
+        .getElementById("form2Radio")
+        .addEventListener("change", toggleFormVisibility);
+      document
+        .getElementById("form3Radio")
+        .addEventListener("change", toggleFormVisibility);
+
+        document
+        .getElementById("form4Radio")
+        .addEventListener("change", toggleFormVisibility);
+
+
+
+        function toggleFormVisibility() {
+  const form1 = document.getElementById("form1");
+  const form2 = document.getElementById("form2");
+  const form3 = document.getElementById("form3");
+  const form4 = document.getElementById("form4"); // Add this line
+
+  clearTableData();
+
+  if (document.getElementById("form1Radio").checked) {
+    form1.style.display = "block";
+    form2.style.display = "none";
+    form3.style.display = "none";
+    form4.style.display = "none"; // Add this line
+  } else if (document.getElementById("form2Radio").checked) {
+    form1.style.display = "none";
+    form2.style.display = "block";
+    form3.style.display = "none";
+    form4.style.display = "none"; // Add this line
+  } else if (document.getElementById("form3Radio").checked) {
+    form1.style.display = "none";
+    form2.style.display = "none";
+    form3.style.display = "block";
+    form4.style.display = "none"; // Add this line
+  } else if (document.getElementById("form4Radio").checked) {
+    form1.style.display = "none";
+    form2.style.display = "none";
+    form3.style.display = "none";
+    form4.style.display = "block"; // Add this line
+  }
+}
+
+
+
+      function getCollectionByUserWithDate(event) {
+        event.preventDefault();
+
+        const cashierIdInput = document.getElementById("cashierIdRange");
+        const startDateInput = document.getElementById("startDateRange");
+        const endDateInput = document.getElementById("endDateRange");
+
+        const cashierId = cashierIdInput.value;
+        const startDate = startDateInput.value;
+        const endDate = endDateInput.value;
+
+        if (!cashierId || !startDate || !endDate) {
+          alert("Please fill in all fields.");
+          return;
+        }
+
+        const apiEndpoint = `http://localhost:8080/billing/getCollectionByUserWithDate`;
+        const queryParams = `?cashierId=${cashierId}&startDate=${startDate}&endDate=${endDate}`;
+
+        fetch(`${apiEndpoint}${queryParams}`)
+          .then((response) => {
+            const status = response.headers.get("Billing-Status");
+            document.getElementById(
+              "billing-status"
+            ).textContent = `Status: ${status}`;
+
+            if (!response.ok) {
+              throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+
+            return response.json();
+          })
+          .then((data) => {
+            const billingTableBody = document.getElementById("billing-body");
+            billingTableBody.innerHTML = ""; // Clear previous data
+            console.log(data);
+            const upiCollection = data.upiCollection;
+            const cashCollection = data.cashCollection;
+            const totalCollection = data.totalCollection;
+            const billingList = data.billingList;
+
+            displayCollectionData(
+              upiCollection,
+              cashCollection,
+              totalCollection
+            );
+            displayData(billingList);
+          })
+          .catch((error) => {
+            console.error("Error fetching data:", error);
+            alert("Error fetching data. Please try again later.");
+          });
+      }
+
+      function getTodayCollection(event) {
+        event.preventDefault();
+
+        const cashierIdInput = document.getElementById("cashierId");
+        const cashierId = cashierIdInput.value;
+
+        if (!cashierId) {
+          alert("Please enter a Cashier ID.");
+          return;
+        }
+
+        const apiEndpoint = `http://localhost:8080/billing/getTodayCollection`;
+        console.log(`${apiEndpoint}?cashierId=${cashierId}`);
+
+        fetch(`${apiEndpoint}?cashierId=${cashierId}`)
+          .then((response) => {
+            const status = response.headers.get("Billing-Status");
+            document.getElementById(
+              "billing-status"
+            ).textContent = `Status: ${status}`;
+
+            if (!response.ok) {
+              throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+
+            return response.json();
+          })
+          .then((data) => {
+            const billingTableBody = document.getElementById("billing-body");
+
+            console.log(data);
+
+            const upiCollection = data.upiCollection;
+            const cashCollection = data.cashCollection;
+            const totalCollection = data.totalCollection;
+            const billingList = data.billingList;
+
+            displayCollectionData(
+              upiCollection,
+              cashCollection,
+              totalCollection
+            );
+            displayData(billingList);
+          });
+      }
+
+      function displayData(billingList) {
+        const billingTableBody = document.getElementById("billing-body");
+        billingTableBody.innerHTML = "";
+
+        if (billingList && Array.isArray(billingList)) {
+          billingList.forEach((billing) => {
+            const row = billingTableBody.insertRow();
+            row.innerHTML = `
+                        <td>${billing.billNo}</td>
+                        <td>${billing.customerName}</td>
+                        <td>${formatDate(billing.date)}</td>
+                        <td>${billing.totalTimePlayed}</td>
+                        <td>${billing.billAmount}</td>
+                        <td>${billing.billingBy}</td>
+                        <td>${billing.billingMode}</td>
+                    `;
+          });
+        } else {
+          alert("Error: Unexpected response structure.");
+        }
+      }
+
+      function getCollectionByCustomDate(event) {
+        event.preventDefault();
+
+        const startDateInput = document.getElementById("startDate");
+        const endDateInput = document.getElementById("endDate");
+
+        const startDate = startDateInput.value;
+        const endDate = endDateInput.value;
+
+        if (!startDate || !endDate) {
+          alert("Please fill in all fields.");
+          return;
+        }
+
+        const apiEndpoint = `http://localhost:8080/billing/getCollectionByCustomDate`;
+        const queryParams = `?startDate=${startDate}&endDate=${endDate}`;
+
+        fetch(`${apiEndpoint}${queryParams}`)
+          .then((response) => {
+            const status = response.headers.get("Billing-Status");
+
+            if (!response.ok) {
+              throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+
+            return response.json();
+          })
+          .then((data) => {
+            const billingTableBody = document.getElementById("billing-body");
+            billingTableBody.innerHTML = ""; // Clear previous data
+
+            console.log(data);
+
+            const upiCollection = data.upiCollection;
+            const cashCollection = data.cashCollection;
+            const totalCollection = data.totalCollection;
+            const billingList = data.billingList;
+
+            displayCollectionData(
+              upiCollection,
+              cashCollection,
+              totalCollection
+            );
+            displayData(billingList);
+          })
+          .catch((error) => {
+            console.error("Error fetching data:", error);
+            alert("Error fetching data. Please try again later.");
+          });
+      }
+
+
+
+
+
+      function getTodayCollectionReport(event) {
+        event.preventDefault();
+
+    
+        const apiEndpoint = `http://localhost:8080/billing/getTodayCollectionReport`;
+    
+
+        fetch(`${apiEndpoint}`)
+          .then((response) => {
+            const status = response.headers.get("Billing-Status");
+
+            if (!response.ok) {
+              throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+
+            return response.json();
+          })
+          .then((data) => {
+            const billingTableBody = document.getElementById("billing-body");
+            billingTableBody.innerHTML = ""; // Clear previous data
+
+            console.log(data);
+
+            const upiCollection = data.upiCollection;
+            const cashCollection = data.cashCollection;
+            const todaysDue = data.todaysDue;
+            const todaysRepayment = data.todaysRepayment;
+            
+
+            const totalCollection = data.totalCollection;
+
+            const billingList = data.billingList;
+
+            displayTodayCollectionData(
+              upiCollection,
+              cashCollection,
+              todaysDue,
+              todaysRepayment,
+              totalCollection
+            );
+            displayData(billingList);
+          })
+          .catch((error) => {
+            console.error("Error fetching data:", error);
+            alert("Error fetching data. Please try again later.");
+          });
+      }
+
+
+
+
+
+
+
+
+
+
+
+
+
+      function displayTodayCollectionData(
+        upiCollection,
+        cashCollection,
+        todaysDue,
+        todaysRepayment,
+        totalCollection
+        
+      ) {
+        document.getElementById("upiCollection").textContent = upiCollection;
+        document.getElementById("cashCollection").textContent = cashCollection;
+        document.getElementById("todaysDue").textContent = todaysDue;
+        document.getElementById("todaysRepayment").textContent = todaysRepayment;
+       
+      
+        document.getElementById("totalCollection").textContent =totalCollection;
+      }
+
+
+
+
+
+
+
+
+
+
+      function displayCollectionData(
+        upiCollection,
+        cashCollection,
+        totalCollection
+      ) {
+        document.getElementById("upiCollection").textContent = upiCollection;
+        document.getElementById("cashCollection").textContent = cashCollection;
+        document.getElementById("totalCollection").textContent =
+          totalCollection;
+      }
+
+      function formatDate(inputDate) {
+        const dateParts = inputDate.split("-");
+        return `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`;
+      }
+
+
+      function clearTableData() {
+  // Clear the table body content
+  const billingTableBody = document.getElementById("billing-body");
+  billingTableBody.innerHTML = "";
+
+  // Clear other relevant data on the page
+  document.getElementById("billing-status").textContent = "";
+  document.getElementById("upiCollection").textContent = "";
+  document.getElementById("cashCollection").textContent = "";
+  document.getElementById("totalCollection").textContent = "";
+  document.getElementById("todaysDue").textContent = "";
+  document.getElementById("todaysRepayment").textContent = "";
+}
+
+
+    </script>
+  </body>
+</html>

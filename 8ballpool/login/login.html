@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        font-size: 20px;
+      }
+      marquee {
+        margin: 0;
+        padding: 0;
+        background: black;
+        color: white;
+      }
+      body {
+        position: relative;
+        background: rgb(255, 255, 255);
+        height: 100vh;
+        width: 100vw;
+      }
+      .bg {
+        height: 100%;
+        width: 100%;
+        position: absolute;
+      }
+      .bg img {
+        height: 100%;
+        width: 100%;
+        object-fit: cover;
+      }
+      h1 {
+        font-size: 50px;
+        color: aliceblue;
+      }
+      .container {
+        background: white;
+        background: linear-gradient(
+          to right bottom,
+          rgba(255, 255, 255, 0.2),
+          rgba(255, 255, 255, 0.1)
+        );
+        backdrop-filter: blur(1rem);
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        /* background-color: aqua; */
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: space-evenly;
+        height: 500px;
+        width: 500px;
+        border-radius: 20px;
+      }
+
+      input,
+      button {
+        height: 50px;
+        width: 350px;
+        border-radius: 20px;
+        outline: none;
+        border: none;
+        padding-left: 20px;
+      }
+
+      button {
+        padding-left: 0;
+        width: 150px;
+        background-color: #ffb410;
+        color: white;
+      }
+
+      button:hover {
+        cursor: pointer;
+        background-color: #aa7400;
+      }
+    </style>
+    <title>Login</title>
+  </head>
+  <body>
+    <!-- <marquee>Welcome</marquee> -->
+    <div class="bg">
+      <img src="../assets/login_bg.jpg" alt="" />
+    </div>
+    <div class="container">
+      <h1>Admin Login</h1>
+      <div class="username">
+        <input type="text" name="username" id="userId" placeholder="username" />
+      </div>
+      <div class="password">
+        <input
+          type="password"
+          name="password"
+          id="password"
+          placeholder="password"
+        />
+      </div>
+      <button onclick="validateLogin()">Login</button>
+    </div>
+  </body>
+  <script>
+    function validateLogin() {
+      var userId = document.getElementById("userId").value;
+      var password = document.getElementById("password").value;
+
+      fetch("http://localhost:8080/login/validateUser", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body:
+          "userId=" +
+          encodeURIComponent(userId) +
+          "&password=" +
+          encodeURIComponent(password),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (data) {
+            // Assuming the API returns user object on successful login
+            displayUserData(data);
+          } else {
+            displayErrorMessage("Invalid User ID or Password");
+          }
+        })
+        .catch((error) => {
+          console.error("Error:", error);
+          displayErrorMessage(
+            "An error occurred while processing your request"
+          );
+        });
+    }
+
+    function displayUserData(user) {
+      // You can customize this part based on your requirements
+      sessionStorage.setItem("userData", JSON.stringify(user));
+
+      // Redirect to the index page
+      window.location.href = "../index.html";
+    }
+
+    function displayErrorMessage(message) {
+      alert("Incorrect User Id or Password");
+    }
+  </script>
+</html>

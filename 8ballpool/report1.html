@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Billing Collection</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-TX8QgDsfLyvHA0tr5zG5CtiuXSi2p3Qhq4CwO/Q5zUBKti6z5vYO5w3DbSCdWDAH" crossorigin="anonymous">
+</head>
+<body>
+
+<div class="container mt-5">
+    <h2>Billing Collection</h2>
+    <form id="billingForm">
+        <div class="mb-3">
+            <label for="cashierId" class="form-label">Cashier ID:</label>
+            <input type="text" class="form-control" id="cashierId" name="cashierId" required>
+        </div>
+        <div class="mb-3">
+            <label for="startDate" class="form-label">Start Date:</label>
+            <input type="date" class="form-control" id="startDate" name="startDate" required>
+        </div>
+        <div class="mb-3">
+            <label for="endDate" class="form-label">End Date:</label>
+            <input type="date" class="form-control" id="endDate" name="endDate" required>
+        </div>
+        <button type="button" class="btn btn-primary" onclick="getBillingCollection()">Get Collection</button>
+    </form>
+</div>
+
+<script>
+    function getBillingCollection() {
+        var cashierId = document.getElementById("cashierId").value;
+        var startDate = document.getElementById("startDate").value;
+        var endDate = document.getElementById("endDate").value;
+
+        // Call your backend API with the provided parameters
+        // For example, using fetch API
+        fetch("http://localhost:8080/billing/getCollectionByUserWithDate?cashierId=" + cashierId + "&startDate=" + startDate + "&endDate=" + endDate, {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json"
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error("Network response was not ok");
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log(data);
+            // Handle the response data here
+        })
+        .catch(error => {
+            console.error("There was a problem with the fetch operation:", error);
+            // Handle the error here
+        });
+    }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login Page</title>
+  </head>
+  <body>
+    <h1>Login</h1>
+    <form id="loginForm">
+      <label for="userId">User ID:</label>
+      <input type="text" id="userId" name="userId" required /><br />
+
+      <label for="password">Password:</label>
+      <input type="password" id="password" name="password" required /><br />
+
+      <button type="button" onclick="validateLogin()">Login</button>
+    </form>
+
+    <div id="responseMessage"></div>
+
+    <script>
+      function validateLogin() {
+        var userId = document.getElementById("userId").value;
+        var password = document.getElementById("password").value;
+
+        fetch("http://localhost:8080/login/validateUser", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          body:
+            "userId=" +
+            encodeURIComponent(userId) +
+            "&password=" +
+            encodeURIComponent(password),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data) {
+              // Assuming the API returns user object on successful login
+              displayUserData(data);
+            } else {
+              displayErrorMessage("Invalid User ID or Password");
+            }
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+            displayErrorMessage(
+              "An error occurred while processing your request"
+            );
+          });
+      }
+
+      function displayUserData(user) {
+        // You can customize this part based on your requirements
+        console.log(user);
+        var responseMessage = document.getElementById("responseMessage");
+        responseMessage.innerHTML = "<p>Welcome, " + user.sname + "</p>";
+
+        // Handle other data or UI updates as needed
+      }
+
+      function displayErrorMessage(message) {
+        var responseMessage = document.getElementById("responseMessage");
+        responseMessage.innerHTML =
+          '<p style="color: red;">' + message + "</p>";
+      }
+    </script>
+  </body>
+</html>
